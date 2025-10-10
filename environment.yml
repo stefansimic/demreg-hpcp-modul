@@ -18,4 +18,5 @@ dependencies:
   - sunpy>=5.0.0
   - aiapy>=0.7.0
   - python-dotenv
+  - numba
   - pip
