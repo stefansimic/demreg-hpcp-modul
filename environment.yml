@@ -1,0 +1,20 @@
+name: hpcp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - jupyterlab
+  - numpy
+  - scipy
+  - pandas
+  - astropy
+  - numba
+  - dask
+  - matplotlib
+  - mpi4py
+  - tqdm
+  - rich
+  - threadpoolctl
+  - sunpy>=5.0.0
+  - aiapy>=0.7.0
+  - pip
