@@ -1,4 +1,4 @@
-name: hpcp
+name: hpcp-own
 channels:
   - conda-forge
 dependencies:
@@ -20,3 +20,5 @@ dependencies:
   - python-dotenv
   - numba
   - pip
+  - pip:
+    - cupy-cuda12x
