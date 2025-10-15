@@ -1,0 +1,66 @@
+{
+  "elapsed_mean_s": 6.4368532776716165,
+  "elapsed_std_s": 0.09205532460449482,
+  "throughput_px_per_s": 10181.37235275093,
+  "px_count": 65536,
+  "results_each": [
+    {
+      "elapsed_s": 6.390306524001062,
+      "chisq_mean": 45.29240610716541,
+      "chisq_median": 45.2924061071654,
+      "dem_shape": [
+        256,
+        256,
+        34
+      ],
+      "chisq_shape": [
+        256,
+        256
+      ]
+    },
+    {
+      "elapsed_s": 6.377366564003751,
+      "chisq_mean": 45.29240610716541,
+      "chisq_median": 45.2924061071654,
+      "dem_shape": [
+        256,
+        256,
+        34
+      ],
+      "chisq_shape": [
+        256,
+        256
+      ]
+    },
+    {
+      "elapsed_s": 6.542886745010037,
+      "chisq_mean": 45.29240610716541,
+      "chisq_median": 45.2924061071654,
+      "dem_shape": [
+        256,
+        256,
+        34
+      ],
+      "chisq_shape": [
+        256,
+        256
+      ]
+    }
+  ],
+  "bench_info": {
+    "env": {
+      "python": "3.11.14",
+      "numpy": "2.3.3",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "shape": {
+      "kind": "image",
+      "width": 256,
+      "height": 256
+    },
+    "mode": "synthetic"
+  },
+  "comparison": null
+}
