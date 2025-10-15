@@ -36,9 +36,9 @@ def dem_reg_map(sva, svb, U, W, dnin, ednin, rgt=1.0, nmu=42):
         else:
             Kcore = Z[:W.shape[0], :]
 
-        kdag = W @ Kcore
+        kdag = W.T @ Kcore
         dem_tmp = kdag @ dnin
-        dn_reg_tmp = (W.T @ dem_tmp).squeeze()
+        dn_reg_tmp = (W @ dem_tmp).squeeze()
         residuals = (dnin - dn_reg_tmp) / ednin
         chisq = np.sum(residuals ** 2) / max(1, len(dnin))
 

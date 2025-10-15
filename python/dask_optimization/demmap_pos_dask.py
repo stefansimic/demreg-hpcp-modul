@@ -62,7 +62,7 @@ def _dem_single_pixel(dnin, ednin, rmatrix, logt, dlogt, glc,
             Kcore = np.vstack([Z, np.zeros((nt - nf, nf))])
         else:
             Kcore = Z[:nt, :]
-        kdag = W @ Kcore
+        kdag = Kcore @ W.T
 
         dem_reg_out = (kdag @ dnin).squeeze()
         ndem = int(np.sum(dem_reg_out < 0))
