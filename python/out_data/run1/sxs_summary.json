@@ -1,0 +1,90 @@
+{
+  "labels": [
+    "baseline",
+    "improved"
+  ],
+  "elapsed_s": {
+    "baseline": 14.933257405005861,
+    "improved": 6.311238859023433
+  },
+  "speedup_baseline_over_improved": 2.3661372574506796,
+  "chisq_summary": {
+    "baseline": {
+      "mean": 49.79614224365715,
+      "median": 49.79614224365714,
+      "p95": 49.79614224365714,
+      "min": 49.79614224365714,
+      "max": 49.79614224365714,
+      "count": 65536
+    },
+    "improved": {
+      "mean": 45.2923515149461,
+      "median": 45.29235151494611,
+      "p95": 45.29235151494611,
+      "min": 45.29235151494611,
+      "max": 45.29235151494611,
+      "count": 65536
+    }
+  },
+  "shapes": {
+    "baseline": {
+      "dem": [
+        256,
+        256,
+        34
+      ],
+      "edem": [
+        256,
+        256,
+        34
+      ],
+      "elogt": [
+        256,
+        256,
+        34
+      ],
+      "dn_reg": [
+        256,
+        256,
+        6
+      ]
+    },
+    "improved": {
+      "dem": [
+        256,
+        256,
+        34
+      ],
+      "edem": [
+        256,
+        256,
+        34
+      ],
+      "elogt": [
+        256,
+        256,
+        34
+      ],
+      "dn_reg": [
+        256,
+        256,
+        6
+      ]
+    }
+  },
+  "env": {
+    "python": "3.11.14",
+    "numpy": "2.3.3",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "payload_info": {
+    "pixels": 1024,
+    "width": 256,
+    "height": 256,
+    "seed": 132
+  },
+  "run_index": 1,
+  "repeats": 3
+}

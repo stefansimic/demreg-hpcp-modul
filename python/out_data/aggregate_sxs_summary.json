@@ -1,0 +1,49 @@
+{
+  "repeats": 3,
+  "payload_info": {
+    "pixels": 1024,
+    "width": 256,
+    "height": 256,
+    "seed_base": 132
+  },
+  "env": {
+    "python": "3.11.14",
+    "numpy": "2.3.3",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "elapsed_s": {
+    "baseline": {
+      "values": [
+        14.933257405005861,
+        15.352089322987013,
+        15.622091981000267
+      ],
+      "mean": 15.30247956966438,
+      "std": 0.34708660877351283
+    },
+    "improved": {
+      "values": [
+        6.311238859023433,
+        6.40253824001411,
+        6.4615902790101245
+      ],
+      "mean": 6.391789126015889,
+      "std": 0.0757498842363054
+    },
+    "speedup_baseline_over_improved": 2.3938785215210907
+  },
+  "chisq_summary": {
+    "baseline": {
+      "mean_mean": 49.79614224365715,
+      "mean_median": 49.79614224365714,
+      "mean_p95": 49.79614224365714
+    },
+    "improved": {
+      "mean_mean": 45.2923515149461,
+      "mean_median": 45.29235151494611,
+      "mean_p95": 45.29235151494611
+    }
+  }
+}

@@ -249,7 +249,12 @@ def dem_pix(dnin,ednin,rmatrix,logt,dlogt,glc,reg_tweak=1.0,max_iter=10,rgt_fact
                 dr0=(kdag@dn).squeeze()
                 # only take the positive with certain amount (fcofmx) of max, then make rest small positive
                 fcofmax=1e-4
-                mask=np.where(dr0 > 0) & (dr0 > fcofmax*np.max(dr0))
+
+                
+                # mask=np.where(dr0 > 0) & (dr0 > fcofmax*np.max(dr0))
+                mask = (dr0 > 0) & (dr0 > fcofmax * dr0.max())
+
+                
                 dem_reg_lwght=np.ones(nt)
                 dem_reg_lwght[mask]=dr0[mask]
 #                ~~~~~~~~~~~~~~~~~ 
