@@ -13,7 +13,7 @@ else:
     raise RuntimeError("DEMREG_PATH is not set. Please define it in your environment.")
 
 from demmap_pos import demmap_pos
-from demmap_pos_gpu import demmap_pos_gpu
+from demmap_pos_gpu_2 import demmap_pos_gpu_2 as demmap_pos_gpu
 
 # --- Benchmark Parameters ---
 na = 2000

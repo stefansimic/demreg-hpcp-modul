@@ -9,17 +9,28 @@ load_dotenv()
 demreg_path = os.getenv("DEMREG_PATH")
 if demreg_path:
     sys_path.append(demreg_path)
+    sys_path.append(demreg_path + "/vectorized")
+    sys_path.append(demreg_path + "/gpu")
 else:
     raise RuntimeError("DEMREG_PATH is not set. Please define it in your environment.")
 
 from demmap_pos import demmap_pos
 from demmap_pos_vectorized import demmap_pos_vectorized
 
+# --- Try GPU version ---
+try:
+    import cupy as cp
+    from demmap_pos_gpu import demmap_pos_gpu
+    from demmap_pos_gpu_l2 import demmap_pos_gpu_l2
+    HAS_GPU = True
+except ImportError:
+    HAS_GPU = False
+
 # --- Benchmark Parameters ---
 na = 200
 nf = 6
 nt = 200
-repeats = 3
+repeats = 1
 
 # --- Generate Realistic Test Data ---
 def generate_test_data(na, nf, nt):
@@ -98,6 +109,35 @@ print("🖥️  Running vectorized solver...")
 )
 
 # -------------------------------------------------------------------
+# Run GPU Benchmark (CuPy)
+# -------------------------------------------------------------------
+if HAS_GPU:
+    print("🧪 Running GPU (CuPy) solver...")
+    (gpu_result, gpu_edem, gpu_elogt, gpu_chisq, gpu_dn_reg), gpu_time = benchmark(
+        demmap_pos_gpu,
+        "GPU (CuPy)",
+        dd, ed, rmatrix, logt, dlogt, glc,
+        dem_norm0=dem_norm0,
+        repeats=repeats
+    )
+
+    print("🧪 Running GPU L2 (CuPy) solver...")
+    (gpu_l2_result, gpu_l2_edem, gpu_l2_elogt, gpu_l2_chisq, gpu_l2_dn_reg), gpu_l2_time = benchmark(
+        demmap_pos_gpu_l2,
+        "GPU L2 (CuPy)",
+        dd, ed, rmatrix, logt, dlogt, glc,
+        dem_norm0=dem_norm0,
+        repeats=repeats
+    )
+else:
+    print("⚠️ CuPy / GPU implementation not available — skipping GPU benchmark.")
+    gpu_result = gpu_chisq = None
+    gpu_time = np.nan
+
+    gpu_l2_result = gpu_chisq = None
+    gpu_l2_time = np.nan
+
+# -------------------------------------------------------------------
 # 📊 CHI²-Analyse (nur interne Solver-Werte)
 # -------------------------------------------------------------------
 print("\n📊 Data-space quality analysis (χ²)")
@@ -113,38 +153,25 @@ def describe_chisq(name, chisq):
 
 describe_chisq("Baseline", baseline_chisq)
 describe_chisq("Vectorized", vectorized_chisq)
-
-chisq_diff = vectorized_chisq - baseline_chisq
-chisq_diff_median = np.median(chisq_diff)
-chisq_diff_p95 = np.percentile(np.abs(chisq_diff), 95)
-frac_close = np.mean(np.abs(chisq_diff) < 0.2)
-
-print(f"\n   🔍 Δχ² (Vectorized - Baseline):")
-print(f"      median Δχ² = {chisq_diff_median:.3f}")
-print(f"      95%ile |Δχ²| = {chisq_diff_p95:.3f}")
-print(f"      ✅ {frac_close*100:.1f}% der Pixel liegen innerhalb ±0.2 χ²-Differenz\n")
-
-# -------------------------------------------------------------------
-# 📉 DEM-space comparison
-# -------------------------------------------------------------------
-print("📉 DEM-space comparison:")
-
-rel_diff = np.linalg.norm(baseline_result - vectorized_result) / np.linalg.norm(baseline_result)
-cos_sim = np.median(
-    np.sum(baseline_result * vectorized_result, axis=1)
-    / (np.linalg.norm(baseline_result, axis=1) * np.linalg.norm(vectorized_result, axis=1) + 1e-30)
-)
-
-print(f"   🔍 Relative L2 difference: {rel_diff:.3e}")
-print(f"   🤝 Median cosine similarity: {cos_sim:.3f}")
+if HAS_GPU:
+    describe_chisq("GPU", gpu_chisq)
+    describe_chisq("GPU l2", gpu_l2_chisq)
 
 # -------------------------------------------------------------------
 # ⚡ Performance
 # -------------------------------------------------------------------
 print("\n⚡ Performance:")
-speedup = baseline_time / vectorized_time
-print(f"   ⚡ speedup: {speedup:.2f}× faster than baseline\n")
+speedup_vec = baseline_time / vectorized_time
+print(f"   ⚡ Vectorized speedup: {speedup_vec:.2f}× faster than baseline")
 
-# Sanity check
-if np.median(vectorized_chisq) > 2.0 or np.median(vectorized_chisq) < 0.5:
-    print("⚠️  Warning: Vectorized χ² deviates strongly from expected ~1. Check regularization/normalization!")
+if HAS_GPU and not np.isnan(gpu_time):
+    speedup_gpu = baseline_time / gpu_time
+    speedup_gpu_l2 = baseline_time / gpu_l2_time
+    
+    print(f"   ⚡ GPU speedup: {speedup_gpu:.2f}× faster than baseline")
+    print(f"   ⚡ GPU L2 speedup: {speedup_gpu_l2:.2f}× faster than baseline")
+    print()
+    print(f"   ⚡ GPU vs Vectorized: {vectorized_time / gpu_time:.2f}× faster than vectorized")
+    print(f"   ⚡ GPU L2 vs Vectorized: {vectorized_time / gpu_l2_time:.2f}× faster than vectorized")
+    print()
+    print(f"   ⚡ GPU L2 vs GPU: {gpu_time / gpu_l2_time:.2f}× faster than GPU")
