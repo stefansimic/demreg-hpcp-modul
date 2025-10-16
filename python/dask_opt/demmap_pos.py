@@ -5,6 +5,7 @@ from dem_reg_map import dem_reg_map
 from tqdm import tqdm
 from threadpoolctl import threadpool_limits
 from dask import delayed, compute
+from dask.diagnostics import ProgressBar
 
 def demmap_pos(dd, ed, rmatrix, logt, dlogt, glc,
                reg_tweak=1.0, max_iter=10, rgt_fact=1.5,
@@ -60,7 +61,8 @@ def demmap_pos(dd, ed, rmatrix, logt, dlogt, glc,
 
 
             # compute all delayed tasks in parallel
-            results = compute(*tasks, scheduler='processes')
+            with ProgressBar():
+                results = compute(*tasks, scheduler='processes')
 
         # collect results
         offset = 0
