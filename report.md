@@ -232,8 +232,18 @@ To achieve meaningful speedups, the next logical steps would include:
 In summary, while our single-machine experiments showed only modest gains, Dask remains a promising framework for **scaling DEMREG to distributed or hybrid HPC environments** where its scheduling and workload distribution capabilities can be fully utilized.
 
 ## Benchmark Design
+This section explains how we designed and executed our benchmarks to compare several DEMREG solver variants. The goal was to measure runtime and result quality in a controlled, repeatable way while keeping the setup close to real workloads.
 
-> TODO SHANE
+We used synthetic yet physically shaped inputs so every solver sees the same problem. For each run we generate a Gaussian-like DEM over temperature bins, build a randomized but bounded response matrix, and synthesize per-channel signals with noise and uncertainties. This keeps the data realistic enough to stress the inversion while staying deterministic across repeats. The exact procedure is implemented in generate_test_data(na, nf, nt), which constructs logt, dlogt, a Gaussian DEM model, the response matrix, and then draws dd/ed for na pixels and nf channels.
+
+We benchmark a baseline CPU implementation against multiple optimized backends. In the simple driver we load the baseline (demmap_pos), a vectorized version, a Dask-based version, and—if available—two GPU variants (standard and an L2-regularized form). Availability of the GPU path is probed at runtime so the suite runs on CPU-only machines without changes.
+
+We also record a simple quality indicator directly in data space: the distribution of reduced χ² values returned by each solver. After each benchmark block we summarize the median, interquartile range, and 95th percentile of χ² to verify that faster variants still fit the synthetic observations at the same level. This keeps performance comparisons honest by ensuring we do not trade speed for unacceptable misfit.
+
+To evaluate scalability, the extended driver sweeps problem sizes along two axes: number of pixels (PIXELS_LIST = [200, 1000, 2000, 5000]) and number of temperature bins (NT_LIST = [200, 400]), while keeping the number of channels fixed at NF = 6. For each (pixels, nt) pair we regenerate the dataset, run all registered algorithms (cpu, vectorized, dask, gpu, gpu-l2) with REPEATS = 5, and collect timing statistics and the median χ². Results are written to ./results/benchmark_results.csv for downstream plotting and report tables.
+
+Speedup is reported relative to the baseline CPU time so improvements are easy to interpret. In the compact script we print “× faster” factors for the vectorized and GPU paths, plus cross-comparisons between GPU and vectorized when a GPU is present; when no GPU is detected we clearly log that those runs are skipped. This conditional behavior makes the suite portable across development machines and the cluster.
+
 
 ## Results & Comparisons
 
@@ -323,7 +333,6 @@ Finally, Dask shows that distributed computing on a single machine brings
 little benefit; its real potential lies in deployment on clusters or in hybrid
 CPU/GPU environments.
 
-## Reflections
 
 ## Reflections
 
