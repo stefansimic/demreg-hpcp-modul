@@ -1,0 +1,2 @@
+run,elapsed_s,chisq_mean,chisq_median,dem_shape,chisq_shape
+1,6.330818604998058,49.797060231124775,49.79706023112479,"[256, 256, 34]","[256, 256]"

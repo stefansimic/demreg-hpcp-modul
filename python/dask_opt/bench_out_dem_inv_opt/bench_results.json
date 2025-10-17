@@ -1,0 +1,38 @@
+{
+  "elapsed_mean_s": 6.330818604998058,
+  "elapsed_std_s": 0.0,
+  "throughput_px_per_s": 10351.899823548982,
+  "px_count": 65536,
+  "results_each": [
+    {
+      "elapsed_s": 6.330818604998058,
+      "chisq_mean": 49.797060231124775,
+      "chisq_median": 49.79706023112479,
+      "dem_shape": [
+        256,
+        256,
+        34
+      ],
+      "chisq_shape": [
+        256,
+        256
+      ]
+    }
+  ],
+  "bench_info": {
+    "env": {
+      "python": "3.11.14",
+      "numpy": "2.3.3",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "shape": {
+      "kind": "image",
+      "width": 256,
+      "height": 256
+    },
+    "mode": "synthetic"
+  },
+  "comparison": null
+}
