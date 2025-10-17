@@ -173,7 +173,74 @@ Both the simple and L² solution can be found in the `./pyhon/gpu` directory.
 
 ### Parallel Computing with Dask
 
-> TODO STEFAN
+A third optimization path explored was **parallel computing with Dask**.  
+The goal was to leverage Dask’s task scheduling and distributed computing model to parallelize DEM computations across multiple cores (and eventually multiple machines).
+
+#### Approach
+
+We integrated Dask into the CPU baseline by modifying the parallel execution logic in  
+`demmap_pos.py`. Specifically, we replaced the existing `ProcessPoolExecutor` section with a Dask-based implementation that uses a **Dask LocalCluster** and `delayed` tasks to execute the per-pixel DEM inversions asynchronously.
+
+**Modified section:**
+```python
+# Original (Baseline)
+with ProcessPoolExecutor() as exe:
+    futures = [exe.submit(dem_unwrap, ...) for i in range(niter)]
+    ...
+
+# Replaced with Dask
+from dask import delayed, compute
+tasks = [delayed(dem_unwrap)(...) for i in range(niter)]
+results = compute(*tasks, scheduler="processes")
+```
+
+This change allowed us to use Dask's more flexible scheduling, enabling better handling of CPU resources and potential scalability to cluster environments.
+
+#### Results
+
+The Dask-based implementation showed **a small speedup** on single-machine tests (roughly 5--10%) for medium-sized datasets.\
+However, for smaller workloads, Dask sometimes performed **worse than the baseline** due to the additional **task graph overhead** and **scheduler latency**.\
+Without an actual distributed cluster, the benefits of Dask were limited, as all computation still occurred on a single node.
+
+Additionaly Dask can be configured to work precisely for the setup which is available, which was difficult to test for us, because it needed more knowledge of the cluster and machine we were working on.
+
+Improving the configuration and distributing the load on the cluster would probably increase the performance by alot.
+
+Dask's strength lies in managing large, distributed workloads rather than optimizing local multiprocessing tasks. The overhead of constructing and managing the task graph outweighs the gains for smaller problem sizes.
+
+#### Analysis
+
+-   **Benefits:**
+
+    -   Cleaner parallel structure with fewer manual thread controls.
+
+    -   Simplified scaling path to distributed clusters (e.g., SLURM, Kubernetes).
+
+    -   Potential to integrate seamlessly with GPU backends (`cupy + dask`).
+
+-   **Limitations:**
+
+    -   No real performance gain on a single node.
+
+    -   Overhead from Dask's task scheduler dominates for small workloads.
+
+    -   Without data locality or persistent workers, data transfer costs remain high.
+
+#### Next Steps
+
+To achieve meaningful speedups, the next logical steps would include:
+
+1.  **Deploying on a real Dask cluster** -- with multiple worker nodes to parallelize DEM calculations across many CPUs or GPUs.
+
+2.  **Batching optimizations** -- processing larger pixel blocks in a single Dask task to reduce overhead.
+
+3.  **Dask Array integration** -- replacing NumPy arrays with Dask arrays to enable true lazy computation and out-of-core scaling.
+
+4.  **Hybrid CPU--GPU scheduling** -- using Dask-CUDA or RAPIDS to dynamically distribute work between CPU and GPU workers.
+
+5.  **Asynchronous I/O** -- overlapping data loading and computation for larger datasets.
+
+In summary, while our single-machine experiments showed only modest gains, Dask remains a promising framework for **scaling DEMREG to distributed or hybrid HPC environments** where its scheduling and workload distribution capabilities can be fully utilized.
 
 ## Benchmark Design
 
