@@ -39,5 +39,19 @@ micromamba update --file environment.yml
 create an .env file like this:
 
 ```
-DEMREG_PATH=/path/to/your/repo
+DEMREG_PATH=/path/to/your/repo/python
 ```
+
+The env variable should point to the python dir in this repo.
+
+## Benchmark
+
+After setup the Benchmark can be run with (env variable has to be set):
+
+```bash
+python python/benchmark.py
+```
+
+## Report
+
+The report can be found in `./report.md`
