@@ -11,9 +11,25 @@
 
 ## Profiling & Analysis of the Baseline
 
-> TODO STEFAN
+**Method.**  
+We profiled the baseline implementation from the `Baseline/` directory using `cProfile`, `timeit`, and scaling tests (`Benchmark_DEM.ipynb`). The benchmark used 1000 randomly generated DEMs with 6 channels and 200 temperature bins, representing a typical 1D or small 2D use case of the DEM inversion pipeline.
 
-**Method.** We profiled the baseline using representative inputs and recorded function-level costs (cProfile/flame), memory behavior, and parallel utilization.
+**Analyzed Modules:**
+- `dem_inv_gsvd.py` – performs the Generalized Singular Value Decomposition (GSVD).  
+- `dem_reg_map.py` – determines the regularization parameter μ using the discrepancy principle.  
+- `demmap_pos.py` – the per-pixel DEM inversion including positivity enforcement and parallel execution.  
+- `dn2dem_pos.py` – wrapper handling 0D, 1D, and 2D input data.
+
+**Profiling Environment:**
+- CPU: Intel/AMD, 1 thread (NumPy BLAS)
+- Python: 3.11.14 / NumPy: 2.3.3  
+- Command:  
+  ```bash
+  python bench_demreg_sxs.py \
+      --baseline_dir Baseline \
+      --width 256 --height 256 --threads 1 \
+      --repeats 3 --outdir ./dask_opt/bench_out_baseline
+
 
 **Environment (baseline run):**
 
@@ -24,12 +40,52 @@
   python bench_demreg_sxs.py --baseline_dir Baseline --improved_dir CPU_Vectorization --width 256 --height 256 --threads 1 --repeats 3 --outdir {OUTDIR}
   ```
 
-**Key findings:**
+**Key Observations**
 
-- The **per-pixel inversion** (GSVD + μ-selection) dominated wall time.
-- **Python loops** and **temporary allocations** on the hot path caused overhead.
-- **Process pool + BLAS threads** risked **oversubscription**, reducing effective throughput.
-- μ-grid length and search bounds affected time predictably; overly long grids wasted work.
+| Category | Observation |
+| --- | --- |
+| **Hotspots** | >80% of wall time spent inside `demmap_pos → dem_pix` (GSVD + μ search). |
+| **GSVD** | `numpy.linalg.svd` is the dominant cost; each pixel triggers a full GSVD decomposition. |
+| **μ-grid search** | The loop over 42--500 μ samples scales linearly in runtime; unnecessarily long grids waste time. |
+| **Parallelization** | Using `ProcessPoolExecutor` introduces non-trivial overhead; combined with BLAS multithreading, this can lead to oversubscription and reduced throughput. |
+| **Memory** | High number of temporary array allocations in `dem_pix()` leads to heavy memory traffic and cache misses. |
+| **Scalability** | Runtime grows nearly linearly with the number of pixels; the solver's structure remains fundamentally sequential per pixel. |
+
+
+**Function-Level Summary (cProfile)**
+| Function                                 | Time Share              | Comment                                 |
+| ---------------------------------------- | ----------------------- | --------------------------------------- |
+| `demmap_pos (Baseline/demmap_pos.py:10)` | ~99% total runtime      | Main computation routine.               |
+| `np.linalg.svd` (inside `dem_inv_gsvd`)  | Major share of CPU time | Matrix decomposition per pixel.         |
+| `threadpoolctl`, `ProcessPoolExecutor`   | Minor but measurable    | Thread and process management overhead. |
+
+**Behavior Analysis**
+
+-   The GSVD + μ-search dominates both CPU and memory usage.
+
+-   The parallelization approach, while conceptually sound, does not scale efficiently because each worker still performs an independent GSVD for every pixel.
+
+-   The balance between `n_par` batch size and `nmu` (number of μ samples) determines total runtime.
+
+-   Small data sets perform worse due to parallel initialization costs, while larger batches achieve near-linear scaling but are still bound by Python-level iteration overhead.
+
+**Conclusion**
+
+The baseline version provides a correct and stable reference implementation of the DEMREG algorithm but is constrained by several structural bottlenecks:
+
+-   Expensive **per-pixel GSVD** computations dominate total runtime.
+
+-   Inefficient **Python-level loops** and temporary array allocations slow down execution.
+
+-   **Parallel processing** is limited by high inter-process communication and BLAS oversubscription.
+
+These insights directly motivated the subsequent optimization strategies implemented in the project:
+
+1.  **CPU Vectorization (NumPy broadcasting)** -- reduce Python-level loops and exploit SIMD operations.
+
+2.  **GPU Acceleration (CuPy)** -- offload GSVD and μ-search to GPU hardware for parallel execution.
+
+3.  **Parallel Computing with Dask** -- distribute large-scale computations efficiently across multiple CPU cores or nodes.
 
 ## Implemented Strategies
 
