@@ -92,7 +92,7 @@ These insights directly motivated the subsequent optimization strategies impleme
 
 ### CPU Vectorization
 
-The first optimization strategy that we wanted to have a look at was CPU Vectorization. To do this, we had a look at the main python files and updated them with vectorized logic. In dem_reg_map, we replaced the nested μ×mode loops with a single broadcasted NumPy evaluation so the entire grid is computed in one pass. The μ-range is handled more safely through finite/positive checks and geometric spacing, and all arithmetic runs in float64 with np.errstate to keep ratio and power operations stable. By leaning on broadcasting and direct reductions, we also cut down on temporary arrays—key wins are the loop-to-vectorized grid shift, safer μ bounds, and fewer temporaries.
+The first optimization strategy that we wanted to have a look at was CPU Vectorization. To do this, we had a look at the main python files and updated them with vectorized logic. In dem_reg_map, we replaced the nested μ×mode loops with a single broadcasted NumPy evaluation so the entire grid is computed in one pass. The μ-range is handled more safely through finite/positive checks and geometric spacing, and all arithmetic runs in float64 with np.errstate to keep ratio and power operations stable. By leaning on broadcasting and direct reductions, we also cut down on temporary arrays-key wins are the loop-to-vectorized grid shift, safer μ bounds, and fewer temporaries.
 
 For dem_inv_gsvd, every place the baseline formed A @ inv(B) now uses linear solves (or a pseudoinverse at the edges), which is both faster and better conditioned. The post-processing is written in a vectorized style that scales rows or columns directly instead of building diagonal matrices and multiplying them, reducing both FLOPs and memory churn; the big advantages are avoiding explicit inverses, performing smaller/fewer matrix multiplications, and improving numerical conditioning.
 
@@ -325,4 +325,17 @@ CPU/GPU environments.
 
 ## Reflections
 
-> TODO ALL
+## Reflections
+
+Looking back on the project as a team, the overall experience was both **challenging and rewarding**.  
+Working on DEMREG optimization gave us hands-on exposure to performance engineering in a real scientific codebase. It was fascinating to see how changes in algorithmic design, data structures, and parallelization strategies directly impact runtime and scalability.
+
+At the same time, this project was **not easy**. The original codebase was quite **complex and unorganized**, with many interdependent functions and nested calls. It took significant effort just to understand the data flow between modules like `demmap_pos`, `dem_inv_gsvd`, and `dem_reg_map`. Because of this, isolating the performance-critical parts for targeted optimization was much harder than expected. In several cases, even small changes required tracing deep function chains to ensure numerical consistency and avoid breaking the solver logic.
+
+We had difficulty to seperate what was important in the code. A clearer separation between algorithmic components, numerical routines, and I/O would have made experimentation and testing much easier.
+
+Despite these difficulties, we found the process **very interesting**. Profiling and analyzing such a computationally heavy algorithm helped us understand the real-world trade-offs between CPU vectorization, GPU acceleration, and distributed execution with Dask. Each approach taught us something different - from how easily performance can be lost through overhead, to how careful algorithm redesign is often the key to real improvement.
+
+We know that our solution is not truly optimal and has much more potential. Nevertheless, the project gave us valuable insights into high-performance Python, numerical computation, and collaborative software optimization.
+
+We leave this project with a better understanding of both **numerical performance challenges** and **the teamwork required to navigate complex scientific software**.
