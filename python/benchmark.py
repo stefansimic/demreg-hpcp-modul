@@ -4,7 +4,6 @@ import os
 from dotenv import load_dotenv
 from sys import path as sys_path
 
-# --- Generate Realistic Test Data ---
 def generate_test_data(na, nf, nt):
     logt = np.linspace(5.7, 7.1, nt)
     dlogt = np.full(nt, 0.05)
@@ -29,9 +28,10 @@ def generate_test_data(na, nf, nt):
 
     return dd, ed, rmatrix, logt, dlogt
 
-
-# --- Benchmark helper function ---
 def benchmark(func, name, *args, repeats=3, **kwargs):
+    # warmup
+    _ = func(*args, **kwargs)
+    
     times = []
     result = None
     for i in range(repeats):
