@@ -241,17 +241,87 @@ In summary, while our single-machine experiments showed only modest gains, Dask 
 
 ![Baseline Performance](./results/plots/cpu_performance.png)
 
+The baseline shows an almost linear scaling of runtime with the number of
+pixels – as expected, since each pixel is processed independently. Runtime
+increases from about **10.4 s** at 200 pixels to over **22 s** at 5000 pixels.
+
 ### CPU Vectorization
 
-![CPU Vetorized Performance](./results/plots/vectorized_performance.png)
+![CPU Vectorized Performance](./results/plots/vectorized_performance.png)
 
-### GPU (Direct Cupy Port)
+The vectorized CPU version delivers a clear acceleration across all pixel sizes
+compared to the baseline. Runtimes are about **25–35% lower**, corresponding to
+a speedup of roughly **1.35–1.42×**. This confirms that eliminating Python
+loops and using NumPy broadcasting has a significant impact on performance
+without requiring algorithmic changes.
+
+### GPU (Direct CuPy Port)
+
+Unfortunately, we were able to collect very little data for this algorithm, as
+it scales extremely poorly. Since we only captured a single data point, no full
+plot was generated. Instead, the following table shows the measured result:
+
+| Pixels | Median Runtime [s] | Speedup vs. CPU |
+| ------ | ------------------ | --------------- |
+| 200    | 29.85              | 0.124×          |
+
+Despite GPU acceleration, performance fell far short of expectations. The main
+reasons are:
+
+- **Per-pixel GSVD**: Each pixel still triggers its own SVD → many small kernel
+  launches.
+- **Memory transfers**: Frequent host-device transfers cause significant
+  overhead.
+- **Kernel launch overhead**: Small operations on the GPU are inefficient when
+  launched individually.
+
+The result is even slower than the CPU version, illustrating that GPU code
+often brings no benefit without algorithmic redesign.
 
 ### GPU (Simplified L² Discrepancy Solver)
 
 ![GPU L2 Performance](./results/plots/gpu-l2_performance.png)
 
-### Comparisson
+The simplified L² version delivers a dramatic performance boost: runtimes are
+in the range of **5–20 ms**, corresponding to a speedup of up to **~1900×**
+compared to the baseline. By eliminating the per-pixel GSVD and using massively
+parallel matrix operations, the GPU can fully exploit its strengths. The
+trade-off is slightly higher **χ² values** and thus lower accuracy.
+
+### Dask
+
+Only a single measurement is available for Dask as well:
+
+| Pixels | Median Runtime [s] | Speedup vs. CPU |
+| ------ | ------------------ | --------------- |
+| 200    | 13.31              | 0.278×          |
+
+The results show that Dask offers no advantage over simple multiprocessing on a
+single machine – in fact, scheduler overhead and task graph construction make
+the code even slower. Dask’s true strength lies in cluster environments with
+many worker nodes or in hybrid CPU-GPU scenarios. For larger datasets or
+distributed systems, it can be a valuable tool, but in our experiment, the
+overhead outweighed the benefits.
+
+### Comparison
+
+![Performance Comparison](./results/plots/runtime_vs_pixels.png)
+
+The results clearly show that the optimization strategies differ greatly in
+their effectiveness and efficiency. The baseline serves as a stable reference
+but is slow and scales linearly with pixel count. CPU vectorization already
+achieves significant improvements by reducing Python overhead and improving
+memory usage.
+
+The direct GPU port demonstrates that simple code porting is usually
+insufficient: many small kernel launches and memory transfers lead to low or
+even negative speedups. Only an algorithmic redesign – as seen with the
+simplified GPU L² solver – enables massive performance improvements by several
+orders of magnitude.
+
+Finally, Dask shows that distributed computing on a single machine brings
+little benefit; its real potential lies in deployment on clusters or in hybrid
+CPU/GPU environments.
 
 ## Reflections
 
